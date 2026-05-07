@@ -100,6 +100,19 @@ namespace PurrNet.Modules
         {
             var scenes = _scenes.sceneStates;
 
+            // Bug 7 May 2026 - Two players being spawned while joining scene
+            // Issue was:
+            // (context) Project with Boot Scene and DontDestroyOnLoad network manager
+            // SceneModule.Setup initialised 'scenes' with DontDestroyOnLoad (001) and Boot (002) scenes. Scenes now has these two scenes
+            // OnClientLoginResponse->OnLocalPlayerReady triggering 'client scene loaded' for scene 001 and 002.
+            // Server receives this, is loaded into SCN_Lane (server's 002). Believes client is in the same scene, spawns client player. (FIRST PROBLEM - wrong scene)
+            // Client receives scene load packet (OnSceneActionsBatch via FirstSceneActionsBatch)
+            // client removes old scene 002 (unload Boot)
+            // Client loads actual scene 002 (load SCN_Lane)
+            // Client tells server scene 002 is loaded (SceneManagerOnSceneLoaded -> AddScene -> PlayLoadEventsForScene -> OnClientSceneLoaded)
+            // Server receives scene 002 load, spawns another player (SECOND PROBLEM - server will happily spawn unlimited players for one client)
+
+            // A workaround: only notify the server of scene load here if the client is confident it has the latest scenes _and_ has not already notified the server
             foreach (var (id, sceneState) in scenes)
             {
                 if (sceneState.scene.isLoaded)
@@ -153,7 +166,8 @@ namespace PurrNet.Modules
 
         private void OnClientSceneLoaded(SceneID scene, bool asServer)
         {
-            if (!_players.localPlayerId.HasValue)
+            // If the player is not ready yet, OR has not received their scenes yet, we are not yet ready to declare we have loaded the correct scenes
+            if (!_players.localPlayerId.HasValue || !_scenes.hasReceivedSceneActionsBatch)
                 return;
 
             onPrePlayerLoadedScene?.Invoke(_players.localPlayerId.Value, scene, asServer);

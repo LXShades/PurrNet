@@ -69,6 +69,8 @@ namespace PurrNet.Modules
         private readonly List<SceneID> _rawScenes = new List<SceneID>();
         private readonly HashSet<SceneID> _sceneActionScenes = new HashSet<SceneID>();
 
+        private bool _hasReceivedSceneActionsBatch = false;
+
         /// <summary>
         /// First callback for when a scene is loaded
         /// </summary>
@@ -109,6 +111,8 @@ namespace PurrNet.Modules
 
         public IReadOnlyList<SceneID> scenes => _rawScenes;
         public IReadOnlyDictionary<SceneID, SceneState> sceneStates => _scenes;
+
+        public bool hasReceivedSceneActionsBatch => _hasReceivedSceneActionsBatch;
 
         private SceneID GetNextID() => new(_nextSceneID++);
 
@@ -398,6 +402,8 @@ namespace PurrNet.Modules
             }
 
             SceneManager.sceneLoaded += SceneManagerOnSceneLoaded;
+
+            _hasReceivedSceneActionsBatch = false;
         }
 
         private void MirrorAlreadyLoadedHostScenes()
@@ -933,6 +939,8 @@ namespace PurrNet.Modules
 
         private void HandleScenes(List<SceneAction> actions)
         {
+            _hasReceivedSceneActionsBatch = true;
+
             if (_networkManager.isServer || _asServer)
             {
                 var serverModule = _networkManager.GetModule<ScenesModule>(true);
