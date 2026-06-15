@@ -274,7 +274,7 @@ namespace PurrNet.Transports
                 _ => DisconnectReason.ClientRequest
             };
 
-            onDisconnected?.Invoke(new Connection(peer.Id), reason, false);
+            onDisconnected?.Invoke(peer != null ? new Connection(peer.Id) : new Connection(0, false), reason, false);
         }
 
         private void OnClientConnected(NetPeer peer)
