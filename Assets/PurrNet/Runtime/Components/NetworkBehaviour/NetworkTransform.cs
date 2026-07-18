@@ -163,7 +163,7 @@ namespace PurrNet
         /// <see cref="NetworkTransformSyncStrategy.ApplyLevel"/>) and any level other than
         /// <see cref="AdaptiveSyncLevel.Off"/> activates them unchanged.
         /// Setting this at runtime re-initializes the sync stream locally; it is NOT replicated
-        /// to other peers â€” set it everywhere yourself. Changing the value in the inspector
+        /// to other peers — set it everywhere yourself. Changing the value in the inspector
         /// during play mode does replicate, so all peers stay consistent while tuning.
         /// </summary>
         public AdaptiveSyncLevel adaptiveSyncLevel
@@ -759,7 +759,8 @@ namespace PurrNet
 
             BumpSendGen();
             AdoptState(state);
-            _lastSentDelta = state.data;
+			// (LXShades modification) - this causes the deltas to get out of sync when clients spawn and immediately send their latest state. The server assumes it has sent this delta already (which it doesn't seem to).
+            //_lastSentDelta = data;
             TeleportToState(state);
             ApplyLerpedPosition();
         }
