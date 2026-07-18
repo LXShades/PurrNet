@@ -423,7 +423,8 @@ namespace PurrNet
             _lastReadData = data;
             _currentData = data;
             _latestData = data;
-            _lastSentDelta = data;
+            // (LXShades modification) - this causes the deltas to get out of sync when clients spawn and immediately send their latest state. The server assumes it has sent this delta already (which it doesn't seem to).
+            //_lastSentDelta = data;
             TeleportToData(data);
             ApplyLerpedPosition();
         }
