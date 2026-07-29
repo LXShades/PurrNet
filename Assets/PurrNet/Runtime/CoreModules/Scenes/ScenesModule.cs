@@ -403,7 +403,8 @@ namespace PurrNet.Modules
 
             SceneManager.sceneLoaded += SceneManagerOnSceneLoaded;
 
-            _hasReceivedSceneActionsBatch = false;
+            if (!asServer && !_networkManager.isServer)
+                _hasReceivedSceneActionsBatch = false;
         }
 
         private void MirrorAlreadyLoadedHostScenes()
@@ -414,6 +415,7 @@ namespace PurrNet.Modules
             if (!_networkManager.TryGetModule<ScenesModule>(true, out var serverModule))
                 return;
 
+            _hasReceivedSceneActionsBatch = true;
             foreach (var pair in serverModule.sceneStates)
             {
                 var sceneId = pair.Key;
