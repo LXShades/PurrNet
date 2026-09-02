@@ -69,7 +69,7 @@ namespace PurrNet.Modules
         private readonly List<SceneID> _rawScenes = new List<SceneID>();
         private readonly HashSet<SceneID> _sceneActionScenes = new HashSet<SceneID>();
 
-        private bool _hasReceivedSceneActionsBatch = false;
+        public bool hasReceivedSceneActionsBatch { get; private set; }
 
         /// <summary>
         /// First callback for when a scene is loaded
@@ -111,8 +111,6 @@ namespace PurrNet.Modules
 
         public IReadOnlyList<SceneID> scenes => _rawScenes;
         public IReadOnlyDictionary<SceneID, SceneState> sceneStates => _scenes;
-
-        public bool hasReceivedSceneActionsBatch => _hasReceivedSceneActionsBatch;
 
         private SceneID GetNextID() => new(_nextSceneID++);
 
@@ -254,7 +252,7 @@ namespace PurrNet.Modules
             return _dontDestroyOnLoad.scene;
         }
 
-        static bool IsDontDestroyOnLoadScene(Scene scene)
+        public static bool IsDontDestroyOnLoadScene(Scene scene)
         {
             return scene.name is "DontDestroyOnLoad";
         }
@@ -404,7 +402,7 @@ namespace PurrNet.Modules
             SceneManager.sceneLoaded += SceneManagerOnSceneLoaded;
 
             if (!asServer && !_networkManager.isServer)
-                _hasReceivedSceneActionsBatch = false;
+                hasReceivedSceneActionsBatch = false;
         }
 
         private void MirrorAlreadyLoadedHostScenes()
@@ -415,7 +413,7 @@ namespace PurrNet.Modules
             if (!_networkManager.TryGetModule<ScenesModule>(true, out var serverModule))
                 return;
 
-            _hasReceivedSceneActionsBatch = true;
+            hasReceivedSceneActionsBatch = true;
             foreach (var pair in serverModule.sceneStates)
             {
                 var sceneId = pair.Key;
@@ -941,7 +939,7 @@ namespace PurrNet.Modules
 
         private void HandleScenes(List<SceneAction> actions)
         {
-            _hasReceivedSceneActionsBatch = true;
+            hasReceivedSceneActionsBatch = true;
 
             if (_networkManager.isServer || _asServer)
             {

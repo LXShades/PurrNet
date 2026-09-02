@@ -116,7 +116,7 @@ namespace PurrNet.Modules
             foreach (var (id, sceneState) in scenes)
             {
                 if (sceneState.scene.isLoaded)
-                    OnClientSceneLoaded(id, _asServer);
+                    OnClientSceneLoaded(id, _asServer, !ScenesModule.IsDontDestroyOnLoadScene(sceneState.scene) /* The DontDestroyOnLoadScene is always sort of loaded */);
             }
 
             _players.onLocalPlayerReceivedID -= OnLocalPlayerReady;
@@ -164,10 +164,15 @@ namespace PurrNet.Modules
             }
         }
 
-        private void OnClientSceneLoaded(SceneID scene, bool asServer)
+        /// <summary>
+        /// When client scene is loaded via SceneLoaded callback. Only does anything if we have the latest scene batch; existing prior scenes might be incorrect.
+        /// </summary>
+        private void OnClientSceneLoaded(SceneID scene, bool asServer) => OnClientSceneLoaded(scene, asServer, true);
+
+        private void OnClientSceneLoaded(SceneID scene, bool asServer, bool isOnlyValidIfHasLatestSceneActionBatch)
         {
             // If the player is not ready yet, OR has not received their scenes yet, we are not yet ready to declare we have loaded the correct scenes
-            if (!_players.localPlayerId.HasValue || !_scenes.hasReceivedSceneActionsBatch)
+            if (!_players.localPlayerId.HasValue || (!_scenes.hasReceivedSceneActionsBatch && isOnlyValidIfHasLatestSceneActionBatch))
                 return;
 
             onPrePlayerLoadedScene?.Invoke(_players.localPlayerId.Value, scene, asServer);
@@ -371,7 +376,10 @@ namespace PurrNet.Modules
                 if (!IsPlayerLoadedInScene(player, scene))
                 {
                     if (CanRestoreLoadedStateWithoutSceneAction(scene))
+                    {
                         MarkPlayerLoadedInScene(player, scene);
+                        UnityEngine.Debug.Log($"[PlayerScene] Loaded {player.id} into scene {scene.id} via MarkPlayerLoadedInScene. I don't understand how this works, this is basically a copypasta of RemoteClientLoadedScene if your code is bugging, it could be this.");
+                    }
                 }
 
                 return;
